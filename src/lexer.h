@@ -21,8 +21,9 @@ class Lexer {
             static int lastChar = getNextChar(iFile);
 
             // スペースをスキップ
-            while (isspace(lastChar))
+            while (isspace(lastChar)) {
                 lastChar = getNextChar(iFile);
+            }
 
             // TODO 1.3: 数字のパーシングを実装してみよう
             // 今読んでいる文字(lastChar)が数字だった場合(isdigit(lastChar) == true)は、
@@ -40,6 +41,19 @@ class Lexer {
             // 7. このトークンは数値だったので、tok_numberをreturnする。
             //
             // ここに実装して下さい
+            if (isdigit(lastChar)) {
+                std::string str = "";
+                str += lastChar;
+                lastChar = getNextChar(iFile);
+                while (isdigit(lastChar)) {
+                    str += lastChar;
+                    lastChar = getNextChar(iFile);
+                }
+                setnumVal(strtod(str.c_str(), NULL));
+                // std::cout << "digit found " << numVal << std::endl;
+                return tok_number;
+            }
+            
 
             // TODO 1.4: コメントアウトを実装してみよう
             // '#'を読んだら、その行の末尾まで無視をするコメントアウトを実装する。
@@ -49,6 +63,17 @@ class Lexer {
             // 4. lastCharがEOFでない場合、行末まで読み込んだので次のトークンに進むためにgettok()をreturnする。
             //
             // ここに実装して下さい
+            if (lastChar == '#') {
+                while (true) {
+                    lastChar = getNextChar(iFile);
+                    if (lastChar == '\n') {
+                        return gettok();
+                    }
+                    if (lastChar == '\0') {
+                        return tok_eof;
+                    }
+                }
+            }
 
             // EOFならtok_eofを返す
             if (iFile.eof())
@@ -57,6 +82,7 @@ class Lexer {
             // tok_numberでもtok_eofでもなければそのcharのasciiを返す
             int thisChar = lastChar;
             lastChar = getNextChar(iFile);
+            // std::cout << "non-number character found " << (char)lastChar << std::endl;
             return thisChar;
         }
 

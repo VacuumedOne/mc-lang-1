@@ -7,3 +7,5 @@ mc: src/mc.cpp
 	$(CXX) $(CXXFLAGS) src/mc.cpp -o mc
 clean:
 	rm mc output.o
+test: mc
+	./mc test/test${ID}.txt

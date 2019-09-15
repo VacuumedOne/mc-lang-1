@@ -81,7 +81,11 @@ namespace {
 // 格納されている。
 // getNextTokenにより次のトークンを読み、Curtokを更新する。
 static int CurTok;
-static int getNextToken() { return CurTok = lexer.gettok(); }
+static int getNextToken() {
+    CurTok = lexer.gettok();
+    // std::cout << (char)CurTok << " ";
+    return CurTok;
+}
 
 // 二項演算子の結合子をmc.cppで定義している。
 static std::map<char, int> BinopPrecedence;
@@ -129,7 +133,22 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
     // 4. getNextToken()を呼んでトークンを一つ進め、2で呼んだParseExpressionの返り値を返します。
     //
     // 課題を解く時はこの行を消してここに実装して下さい。
-    return nullptr;
+    // return nullptr;
+    
+    if (CurTok != '(') {
+        return LogError("MyErr: Paren Expression Parse Error.");
+    }
+    getNextToken();
+    auto expr = ParseExpression();
+    if (expr == nullptr) {
+        return LogError("MyErr: Paren Expression Parse Error.");
+    }
+    if (CurTok != ')') {
+        return LogError("MyErr: Paren Expression Parse Error.");
+    }
+    getNextToken();
+
+    return expr;
 }
 
 // ParsePrimary - NumberASTか括弧をパースする関数
@@ -151,7 +170,7 @@ static std::unique_ptr<ExprAST> ParsePrimary() {
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int CallerPrec,
         std::unique_ptr<ExprAST> LHS) {
     // 課題を解く時はこの行を消して下さい。
-    return LHS;
+    // return LHS;
     while (true) {
         // 1. 現在の二項演算子の結合度を取得する。 e.g. int tokprec = GetTokPrecedence();
 
@@ -177,6 +196,20 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int CallerPrec,
 
         // LHS, RHSをBinaryASTにしてLHSに代入する。
         //LHS = llvm::make_unique<BinaryAST>(BinOp, std::move(LHS), std::move(RHS));
+        int tokprec = GetTokPrecedence();
+        if (tokprec < CallerPrec) {
+            return LHS;
+        }
+        int BinOp = CurTok;
+        getNextToken();
+        auto RHS = ParsePrimary();
+        int NextPrec = GetTokPrecedence();
+
+        if (tokprec < NextPrec) {
+            RHS = ParseBinOpRHS(tokprec + 1, std::move(RHS));
+            if (!RHS) return nullptr;
+        }
+        LHS = llvm::make_unique<BinaryAST>(BinOp, std::move(LHS), std::move(RHS));
     }
 }
 
